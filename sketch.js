@@ -2,11 +2,9 @@
 let stars = [];
 let hearts = [];
 let textos = ["MI VIDA", "MI AMOR", "MI CIELO", "TE ADORO", "ERES MI TODO", "PARA SIEMPRE"];
-let musica;
-// Usamos una fuente genérica del sistema para evitar fallos de carga
-let fuente = 'sans-serif'; 
+let fuente = 'sans-serif'; // Usamos una fuente del sistema
 
-// --- Clases Star y Heart (Sin Cambios, son estables) ---
+// --- Clases Heart y Star (Iguales) ---
 
 class Heart {
   constructor() {
@@ -65,16 +63,10 @@ class Star {
 // --- Funciones de p5.js ---
 
 function preload() {
-  // Solo se intenta cargar la música. Si falla, el programa sigue.
-  musica = loadSound(
-    "https://cdn.pixabay.com/download/audio/2022/03/15/audio_66449b881e.mp3?filename=deep-ambient-110624.mp3",
-    () => console.log("Música cargada con éxito."),
-    (error) => console.error("Error al cargar la música. El sketch seguirá sin audio.", error)
-  );
+  // Preload está vacío para asegurar la carga instantánea.
 }
 
 function setup() {
-  // Inicializa el canvas 3D
   createCanvas(windowWidth, windowHeight, WEBGL);
   
   // Inicializar objetos
@@ -86,25 +78,13 @@ function setup() {
   }
 
   // Configuración de texto
-  // IMPORTANTE: Ya no cargamos fuente, usamos una genérica del sistema.
   textSize(80); 
   textAlign(CENTER, CENTER);
   textFont(fuente);
-  
-  // Configuración de música (si cargó)
-  if (musica.isLoaded()) {
-    musica.setVolume(0.4);
-    // Nota: El loop se inicia al hacer clic en el body (ver index.html)
-  }
 }
 
 function draw() {
     background(0); // Fondo negro
-    
-    // Iniciar la música al hacer clic (si ya se cargó)
-    if (musica.isLoaded() && !musica.isLooping() && getAudioContext().state === 'running') {
-        musica.loop();
-    }
 
     // Rotación general de la vista
     rotateY(frameCount * 0.001);
