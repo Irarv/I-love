@@ -2,18 +2,22 @@ let stars = [];
 let hearts = [];
 let textos = ["TE AMO", "ERES MI VIDA", "MI AMOR", "MI CIELO", "MI CORAZÓN", "TE QUIERO"];
 let musica;
+let fuente;
 
-// ------- Cargar música -------
 function preload() {
+  // Fuente para WEBGL (obligatorio)
+  fuente = loadFont("https://cdnjs.cloudflare.com/ajax/libs/topcoat/0.8.0/font/SourceCodePro-Regular.otf");
+
+  // Música
   musica = loadSound("https://cdn.pixabay.com/download/audio/2022/03/15/audio_66449b881e.mp3?filename=deep-ambient-110624.mp3");
 }
 
 function setup() {
   createCanvas(windowWidth, windowHeight, WEBGL);
 
-  // Reproducir música al iniciar
+  // Música
   userStartAudio().then(() => {
-    musica.setVolume(0.5);
+    musica.setVolume(0.4);
     musica.loop();
   });
 
@@ -27,7 +31,7 @@ function setup() {
     });
   }
 
-  // Corazones (muchos y pequeños)
+  // Corazones pequeños
   for (let i = 0; i < 50; i++) {
     hearts.push({
       x: random(-600, 600),
@@ -36,12 +40,18 @@ function setup() {
       size: random(20, 40)
     });
   }
+
+  // Aplicar fuente cargada
+  textFont(fuente);
 }
 
 function draw() {
   background(0);
 
-  // --- Galaxia al fondo ---
+  rotateY(frameCount * 0.002);
+  rotateX(frameCount * 0.001);
+
+  // Galaxia rosada
   push();
   rotateY(frameCount * 0.0008);
   noStroke();
@@ -51,7 +61,7 @@ function draw() {
   }
   pop();
 
-  // --- Estrellas 3D ---
+  // Estrellas
   stroke(255);
   for (let s of stars) {
     push();
@@ -61,7 +71,7 @@ function draw() {
     pop();
   }
 
-  // --- Corazones flotando ---
+  // Corazones
   for (let h of hearts) {
     push();
     translate(
@@ -74,7 +84,7 @@ function draw() {
     pop();
   }
 
-  // --- Texto romántico girando ---
+  // Texto romántico (¡ya funciona!)
   push();
   rotateY(-frameCount * 0.002);
   fill(255, 150, 220);
@@ -83,7 +93,7 @@ function draw() {
   text(textos[int(frameCount / 80) % textos.length], 0, 0);
   pop();
 
-  // --- Sol brillante en el centro ---
+  // Sol brillante
   push();
   fill(255, 180, 50, 200);
   noStroke();
@@ -91,6 +101,7 @@ function draw() {
   pop();
 }
 
+// Dibujar corazón
 function drawHeart(size) {
   push();
   fill(255, 0, 140);
