@@ -1,338 +1,322 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-  <title>Galaxia de Amor</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galaxia de Amor - Three.js</title>
+    <!-- Carga de Three.js y OrbitControls para la interactividad -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Nota: En este entorno, a veces OrbitControls debe cargarse desde un CDN o estar incluido. Lo incluiré aquí. -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden; /* Oculta barras de desplazamiento */
+            background-color: #000000;
+            font-family: 'Inter', sans-serif;
+        }
+        canvas {
+            display: block;
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #FFD700;
+            font-size: 16px;
+            text-align: center;
+            padding: 8px 15px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            z-index: 10;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+        .container {
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
 </head>
-<body style="margin:0; overflow:hidden;">
-<script>
-/* ================================
-   GALAXIA DE AMOR – PC + MÓVIL
-   ================================ */
+<body>
+    <div id="container" class="container"></div>
+    <div id="info">Gira y haz Zoom (Scroll) para explorar la Galaxia del Amor.</div>
 
-let stars = [];
-let galaxyParticles = [];
-let hearts = [];
-// Lista ampliada de palabras amorosas (¡Demasiadas!)
-let orbitingTexts = [
-    "TE AMO", "MI VIDA", "MI ESTRELLA", "SIEMPRE TÚ", "CONTIGO", 
-    "AMOR ETERNO", "MI CIELO", "SOLO TÚ", "POR SIEMPRE", "MI LUZ",
-    "FELICIDAD", "BESOS", "ABRAZOS", "MI TESORO", "MI ALMA",
-    "INFINITO", "PRECIOSA", "HERMOSA", "ADORO", "PASIÓN",
-    "JUNTOS", "ÚNICA", "PERFECTA", "MI TODO", "MI PAZ",
-    "CORAZÓN", "ILUSIÓN", "ESPECIAL", "FASCINACIÓN", "MAGIA",
-    "TE QUIERO", "ADORABLE", "REINA", "MI AMOR", "LATIDOS",
-    "SUEÑOS", "TERNURA", "MI DUEÑA", "GRACIAS", "VIDA MÍA"
-];
+    <script>
+        // Variables globales de Three.js
+        let scene, camera, renderer, controls;
+        let starfield;
+        const orbitingElements = []; // Almacenará las palabras y corazones
 
-let rotX = 0, rotY = 0;
-let lastMouseX = 0, lastMouseY = 0, dragging = false;
-let zoom = 1.0;
-let paused = false;
+        // Configuración de la Galaxia
+        const GALAXIA_DATA = [
+            { text: "Amor Eterno", color: "#FF69B4", radius: 50, speed: 0.005, count: 5 },
+            { text: "Felicidad", color: "#00FFFF", radius: 80, speed: 0.003, count: 8 },
+            { text: "Siempre Juntos", color: "#FFFFFF", radius: 110, speed: 0.002, count: 7 },
+        ];
 
-// Variables para móvil (pinch zoom)
-let lastDist = 0;
-let doubleTapTime = 0;
+        // --- Inicialización ---
+        function init() {
+            // 1. Escena
+            scene = new THREE.Scene();
 
-const CONFIG = {
-  // Aumentado el número de estrellas para un fondo más denso
-  starCount: 1800, 
-  galaxyParticlesCount: 1200,
-  galaxyRadius: 420,
-  galaxySpiralTurns: 3.2,
-  galaxyRotationSpeed: 0.002,
-  // Más anillos de texto para crear una esfera de palabras
-  textRings: [150, 190, 230, 270, 310, 350], 
-  textSpeed: 0.8,
-  heartSize: 8,
-  heartSpawnOnClick: 8,
-  backgroundColor: [0,0,0],
-  sunColor: [255,200,100],
-  heartColor: [255,80,120],
-  smallHeartColor: [255,150,180]
-};
+            // 2. Cámara
+            // Parámetros: FOV, Aspect Ratio, Near, Far
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 200;
 
-function setup(){
-  createCanvas(windowWidth, windowHeight, WEBGL);
-  textFont('Helvetica');
-  textAlign(CENTER, CENTER);
+            // 3. Renderizador
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('container').appendChild(renderer.domElement);
 
-  // Estrellas del espacio
-  for(let i=0;i<CONFIG.starCount;i++){
-    stars.push({
-      x: random(-2000,2000),
-      y: random(-2000,2000),
-      z: random(-2000,-200),
-      // Tamaño un poco más grande
-      size: random(1.0,3.5), 
-      twinkle: random(0.2,1.0)
-    });
-  }
+            // 4. Controles de Órbita (Permite la interacción de rotar y zoom)
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true; // Efecto de inercia
+            controls.dampingFactor = 0.05;
+            controls.minDistance = 5; // Limitar el zoom
+            controls.maxDistance = 500;
 
-  // Partículas de la galaxia
-  for(let i=0;i<CONFIG.galaxyParticlesCount;i++){
-    let t = random();
-    let angle = t * CONFIG.galaxySpiralTurns * TWO_PI + random(-0.4,0.4);
-    let r = t * CONFIG.galaxyRadius * (0.15 + random(0.85));
+            // 5. Luces (Necesarias para el Sol central)
+            const ambientLight = new THREE.AmbientLight(0x404040, 5); // Luz suave
+            scene.add(ambientLight);
 
-    let offset = p5.Vector.fromAngle(angle + HALF_PI).mult(random(-40,40));
-    let x = cos(angle) * r + offset.x;
-    let y = random(-40,40) * (1 - t);
-    let z = sin(angle) * r + offset.y;
+            const pointLight = new THREE.PointLight(0xFFFFFF, 10, 500); // Luz del Sol
+            scene.add(pointLight);
 
-    let hue = lerpColor(color(120,120,255), color(255,200,120), t);
+            // Crear todos los elementos de la Galaxia
+            createStarfield();
+            createCentralSun();
+            createRings();
 
-    galaxyParticles.push({x,y,z,angle,r,t,hue,size:random(0.6,2.6)});
-  }
+            // Manejar redimensionamiento
+            window.addEventListener('resize', onWindowResize, false);
 
-  // Corazones decorativos
-  for(let i=0;i<80;i++){
-    hearts.push({
-      x: random(-900,900),
-      y: random(-600,600),
-      z: random(-1000,1000),
-      size: random(2,6),
-      vx: random(-0.2,0.2),
-      vy: random(-0.1,0.1),
-      life: random(200,600),
-      color: CONFIG.smallHeartColor.slice()
-    });
-  }
-}
+            // Iniciar el bucle de animación
+            animate();
+        }
 
-function windowResized(){
-  resizeCanvas(windowWidth, windowHeight);
-}
+        // --- Funciones de Creación de Elementos ---
 
-function draw(){
-  if(paused){
-    background(CONFIG.backgroundColor);
-    displayScene(0);
-    return;
-  }
+        // Función para crear el fondo de estrellas (Partículas)
+        function createStarfield() {
+            const starCount = 10000;
+            const starGeometry = new THREE.BufferGeometry();
+            const starVertices = [];
 
-  background(CONFIG.backgroundColor);
+            for (let i = 0; i < starCount; i++) {
+                // Genera coordenadas aleatorias en un cubo grande
+                const x = (Math.random() - 0.5) * 2000;
+                const y = (Math.random() - 0.5) * 2000;
+                const z = (Math.random() - 0.5) * 2000;
+                starVertices.push(x, y, z);
+            }
 
-  // Actualizar galaxia
-  for(let p of galaxyParticles){
-    p.angle += CONFIG.galaxyRotationSpeed;
-    p.x = cos(p.angle) * p.r;
-    p.z = sin(p.angle) * p.r;
-  }
+            starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
 
-  // Corazones flotantes
-  for(let i = hearts.length - 1; i >= 0; i--){
-    let h = hearts[i];
-    h.x += h.vx;
-    h.y += h.vy;
-    h.life--;
-    if(h.life <= 0) hearts.splice(i,1);
-  }
+            // Material para las estrellas (pequeños puntos blancos)
+            const starMaterial = new THREE.PointsMaterial({
+                color: 0xFFFFFF,
+                size: 1,
+                sizeAttenuation: true // Hace que se vean más pequeñas cuanto más lejos están
+            });
 
-  displayScene(frameCount);
-}
+            starfield = new THREE.Points(starGeometry, starMaterial);
+            scene.add(starfield);
+        }
 
-function displayScene(tframe){
-  push();
-  scale(zoom);
-  rotateX(rotX);
-  rotateY(rotY);
+        // Función para crear el Sol/Núcleo de la Galaxia (esfera giratoria)
+        function createCentralSun() {
+            const sunGeometry = new THREE.SphereGeometry(15, 32, 32);
 
-  // Estrellas del fondo (más brillo y destellos)
-  push();
-  translate(0,0,-1500);
-  for(let s of stars){
-    push();
-    translate(s.x, s.y, s.z);
-    // Mayor amplitud de brillo (de 0.2 a 1.0)
-    let tw = 0.2 + 0.8 * sin((tframe*0.04 + s.twinkle*10)); 
-    noStroke();
-    // Usar `emissiveMaterial` para que brillen intensamente
-    emissiveMaterial(255, 255*tw); 
-    sphere(s.size * tw, 6, 6);
-    pop();
-  }
-  pop();
+            // Material que simula un sol brillante o un núcleo galáctico
+            const sunMaterial = new THREE.MeshPhongMaterial({
+                color: 0xFF8C00, // Naranja fuerte
+                emissive: 0xFF4500, // Emite luz roja/naranja (brillo interno)
+                shininess: 100
+            });
 
-  // Luz ambiente
-  ambientLight(80);
-  // Luz focal suave para la galaxia
-  pointLight(255,255,240, 0,0,300);
+            const sun = new THREE.Mesh(sunGeometry, sunMaterial);
+            sun.name = "CentralSun";
+            scene.add(sun);
 
-  // Sol central (emisor de amor)
-  push();
-  rotateY(tframe*0.001);
-  // Emite luz para un efecto más brillante
-  emissiveMaterial(CONFIG.sunColor); 
-  sphere(40, 20, 20);
-  pop();
+            // Añadir un brillo extra usando un Sprite para el efecto de resplandor
+            const flareTexture = createFlareTexture();
+            const flareMaterial = new THREE.SpriteMaterial({
+                map: flareTexture,
+                color: 0xFFFF00, // Amarillo brillante
+                transparent: true,
+                blending: THREE.AdditiveBlending,
+                sizeAttenuation: true
+            });
+            const flare = new THREE.Sprite(flareMaterial);
+            flare.scale.set(60, 60, 1);
+            sun.add(flare); // Añadir el flare como hijo del Sol
+        }
 
-  // Partículas de la galaxia
-  for(let p of galaxyParticles){
-    push();
-    translate(p.x, p.y, p.z);
-    let col = p.hue;
-    fill(red(col), green(col), blue(col), 150);
-    noStroke();
-    sphere(p.size, 6, 6);
-    pop();
-  }
+        // Función para crear la textura de resplandor
+        function createFlareTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 128;
+            canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createRadialGradient(
+                canvas.width / 2, canvas.height / 2, 0,
+                canvas.width / 2, canvas.height / 2, canvas.width / 2
+            );
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+            gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.5)');
+            gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            return new THREE.CanvasTexture(canvas);
+        }
 
-  // Textos orbitando (más anillos y palabras)
-  for(let ri=0; ri<CONFIG.textRings.length; ri++){
-    let R = CONFIG.textRings[ri];
-    // Alternar la dirección de rotación de los anillos
-    let base = tframe*0.001*(ri%2?-1.5:1.5); 
-    
-    for(let i=0;i<orbitingTexts.length;i++){
-      // Repartir las palabras uniformemente en los anillos y a través de ellos
-      let a = base + (i/orbitingTexts.length)*TWO_PI + (ri/CONFIG.textRings.length)*TWO_PI/4; 
-      
-      let x = cos(a)*R;
-      let z = sin(a)*R;
-      // Variación vertical para que parezca una esfera
-      let y = sin(a*4 + ri)*15; 
+        // Función para crear la textura de la palabra (como Sprite)
+        function createTextSprite(message, color = "#FFFFFF") {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            const fontSize = 48;
+            context.font = `Bold ${fontSize}px Inter, sans-serif`;
+            const metrics = context.measureText(message);
+            const textWidth = metrics.width;
 
-      push();
-      translate(x,y,z);
-      // Orientar el texto hacia la cámara, compensando la rotación global
-      rotateY(-rotY); 
-      // Hace que el texto brille
-      fill(255, 255, 200, 255); 
-      textSize(24);
-      text(orbitingTexts[i], 0,0);
-      pop();
-    }
-  }
+            // Ajustar el tamaño del canvas para el texto
+            canvas.width = textWidth + 10;
+            canvas.height = fontSize + 10;
+            context.font = `Bold ${fontSize}px Inter, sans-serif`; // Reset font after resize
+            context.fillStyle = color;
+            context.fillText(message, 5, fontSize - 2);
 
-  // Corazones
-  for(let h of hearts){
-    push();
-    translate(h.x,h.y,h.z);
-    drawHeart(0,0,h.size,h.color);
-    pop();
-  }
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.needsUpdate = true;
 
-  pop();
-}
+            const material = new THREE.SpriteMaterial({
+                map: texture,
+                transparent: true,
+                blending: THREE.AdditiveBlending,
+                color: new THREE.Color(color)
+            });
 
-function drawHeart(x,y,s,col){
-  noStroke();
-  fill(col);
-  beginShape();
-  vertex(0,-s*0.3);
-  bezierVertex(s*0.6,-s*0.8, s*1.6,-s*0.05, 0,s*1.2);
-  bezierVertex(-s*1.6,-s*0.05, -s*0.6,-s*0.8, 0,-s*0.3);
-  endShape(CLOSE);
-}
+            const sprite = new THREE.Sprite(material);
+            // Ajustar escala para que se vea bien en 3D
+            sprite.scale.set(canvas.width / 8, canvas.height / 8, 1);
+            return sprite;
+        }
 
-/* ======================
-   PC: MOUSE INTERACCIÓN
-   ====================== */
-function mousePressed(){
-  lastMouseX = mouseX;
-  lastMouseY = mouseY;
-  dragging = true;
+        // Función para crear la textura del corazón
+        function createHeartSprite() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 64;
+            canvas.height = 64;
+            const context = canvas.getContext('2d');
+            const color = "#FF007F"; // Rosa intenso
+            context.fillStyle = color;
+            context.shadowColor = color;
+            context.shadowBlur = 5;
 
-  spawnHearts(mouseX, mouseY);
-}
+            // Dibujar un corazón usando Path
+            context.beginPath();
+            const x = 32;
+            const y = 32;
+            const size = 18;
+            context.moveTo(x, y + size / 2);
+            context.bezierCurveTo(x + size, y - size, x + size * 2, y + size / 2, x, y + size * 1.5);
+            context.bezierCurveTo(x - size * 2, y + size / 2, x - size, y - size, x, y + size / 2);
+            context.fill();
 
-function mouseDragged(){
-  if(dragging){
-    let dx = (mouseX - lastMouseX)*0.01;
-    let dy = (mouseY - lastMouseY)*0.01;
-    rotY += dx;
-    rotX -= dy;
-    lastMouseX = mouseX;
-    lastMouseY = mouseY;
-  }
-}
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.needsUpdate = true;
 
-function mouseReleased(){
-  dragging = false;
-}
+            const material = new THREE.SpriteMaterial({
+                map: texture,
+                transparent: true,
+                blending: THREE.AdditiveBlending,
+                color: new THREE.Color(color)
+            });
 
-function mouseWheel(e){
-  zoom *= (1 - e.delta * 0.0005);
-  zoom = constrain(zoom, 0.3, 3.0);
-}
+            const sprite = new THREE.Sprite(material);
+            sprite.scale.set(10, 10, 1);
+            return sprite;
+        }
 
-/* =======================
-   MÓVIL: TOUCH INTERACCIÓN
-   ======================= */
-function touchStarted(){
-  // doble tap para zoom
-  let t = millis();
-  if(t - doubleTapTime < 250){
-    zoom = constrain(zoom * 1.25, 0.3, 3.0);
-  }
-  doubleTapTime = t;
+        // Función principal para crear los anillos de palabras y corazones
+        function createRings() {
+            GALAXIA_DATA.forEach(ring => {
+                // Repetir el texto/corazón varias veces en el anillo
+                for (let i = 0; i < ring.count; i++) {
+                    let element;
+                    if (i % 2 === 0) { // Alternar palabras y corazones (si es posible)
+                        element = createTextSprite(ring.text, ring.color);
+                    } else {
+                        element = createHeartSprite();
+                    }
 
-  if(touches.length === 1){
-    lastMouseX = touches[0].x;
-    lastMouseY = touches[0].y;
-    dragging = true;
-    spawnHearts(touches[0].x, touches[0].y);
-  }
+                    // Posicionar el elemento en un círculo plano (anillo)
+                    const angle = (i / ring.count) * Math.PI * 2;
+                    element.position.x = Math.cos(angle) * ring.radius;
+                    element.position.z = Math.sin(angle) * ring.radius;
+                    element.position.y = (Math.random() - 0.5) * 5; // Ligeramente disperso en Y
 
-  if(touches.length === 2){
-    lastDist = dist(touches[0].x, touches[0].y, touches[1].x, touches[1].y);
-  }
-}
+                    // Almacenar el elemento con sus propiedades de órbita
+                    element.userData = {
+                        angle: angle,
+                        radius: ring.radius,
+                        speed: ring.speed,
+                        isHeart: i % 2 !== 0
+                    };
 
-function touchMoved(){
-  if(touches.length === 1){
-    // rotar
-    let dx = (touches[0].x - lastMouseX)*0.01;
-    let dy = (touches[0].y - lastMouseY)*0.01;
-    rotY += dx;
-    rotX -= dy;
-    lastMouseX = touches[0].x;
-    lastMouseY = touches[0].y;
-  }
+                    orbitingElements.push(element);
+                    scene.add(element);
+                }
+            });
+        }
 
-  if(touches.length === 2){
-    // pinch zoom
-    let d = dist(touches[0].x, touches[0].y, touches[1].x, touches[1].y);
-    zoom *= 1 + (d - lastDist)*0.002;
-    zoom = constrain(zoom, 0.3, 3.5);
-    lastDist = d;
-  }
+        // --- Bucle de Animación ---
+        function animate() {
+            requestAnimationFrame(animate);
 
-  return false;
-}
+            const sun = scene.getObjectByName("CentralSun");
+            if (sun) {
+                // Rotar el Sol central
+                sun.rotation.y += 0.003;
+                sun.rotation.x += 0.001;
+            }
 
-function touchEnded(){
-  dragging = false;
-}
+            // Mover los elementos orbitando
+            orbitingElements.forEach(element => {
+                const { angle, radius, speed } = element.userData;
 
-/* ========================
-   Crear Corazones
-   ======================== */
-function spawnHearts(px,py){
-  for(let i=0;i<CONFIG.heartSpawnOnClick;i++){
-    hearts.push({
-      x: (px - width/2) / zoom,
-      y: (py - height/2) / zoom,
-      z: random(-200,200),
-      size: random(6,14),
-      vx: random(-0.5,0.5),
-      vy: random(-0.5,0.5),
-      life: random(200,400),
-      color: CONFIG.heartColor
-    });
-  }
-}
+                // Incrementar el ángulo
+                element.userData.angle += speed;
 
-/* Pausar */
-function keyPressed(){
-  if(key === ' '){
-    paused = !paused;
-  }
-}
+                // Calcular la nueva posición en el anillo
+                element.position.x = Math.cos(element.userData.angle) * radius;
+                element.position.z = Math.sin(element.userData.angle) * radius;
 
-</script>
+                // Animación de escala/pulsación para los corazones
+                if (element.userData.isHeart) {
+                    const scaleFactor = 1 + Math.sin(Date.now() * 0.005) * 0.1;
+                    element.scale.set(10 * scaleFactor, 10 * scaleFactor, 1);
+                }
+            });
+
+
+            // Actualizar controles y renderizar
+            controls.update(); // Necesario para OrbitControls con damping
+            renderer.render(scene, camera);
+        }
+
+        // --- Manejo de Eventos ---
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // Iniciar la aplicación 3D una vez que la ventana esté completamente cargada
+        window.onload = init;
+    </script>
 </body>
 </html>
