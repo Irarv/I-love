@@ -23,12 +23,11 @@
 <body>
     <script src="sketch.js"></script>
     
-    <div id="instruccion-audio" style="position: fixed; top: 10px; width: 100%; text-align: center; color: white; font-family: sans-serif; font-size: 18px; z-index: 100;">
+    <div id="instruccion-audio" style="...">
         ✨ Haz clic en cualquier lugar para iniciar la música de la Galaxia ✨
     </div>
     
     <script>
-        // Inicia el audio de p5.js al primer clic del usuario y oculta la instrucción.
         document.body.addEventListener('click', () => {
             if (typeof userStartAudio !== 'undefined') {
                 userStartAudio();
@@ -37,7 +36,7 @@
             if (instruccion) {
                 instruccion.style.display = 'none';
             }
-        }, { once: true }); // Asegura que el evento solo se dispare una vez
+        }, { once: true });
     </script>
 </body>
 </html>
