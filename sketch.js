@@ -1,23 +1,25 @@
-let estrellas = [];
-let fotos = [];
-let corazones = [];
-let textos = ["Te amo", "Mi universo", "Eres especial", "Love U"];
-
-function preload() {
-  fotos.push(loadImage("https://i.imgur.com/UMW7QZb.png"));
-  fotos.push(loadImage("https://i.imgur.com/Vz8iA6A.png"));
-  corazones.push(loadImage("https://i.imgur.com/0Z3pQ0c.png"));
-}
+let stars = [];
+let hearts = [];
 
 function setup() {
-  createCanvas(windowWidth, windowHeight, WEBGL);
+  createCanvas(windowWidth, windowHeight);
+  
+  // Estrellas
+  for (let i = 0; i < 500; i++) {
+    stars.push({
+      x: random(width),
+      y: random(height),
+      z: random(0.5, 2)
+    });
+  }
 
-  for (let i = 0; i < 1000; i++) {
-    estrellas.push({
-      x: random(-2000, 2000),
-      y: random(-2000, 2000),
-      z: random(-2000, 2000),
-      s: random(1, 4)
+  // Corazones
+  for (let i = 0; i < 20; i++) {
+    hearts.push({
+      x: random(width),
+      y: random(height),
+      size: random(20, 50),
+      speed: random(0.2, 1)
     });
   }
 }
@@ -25,50 +27,47 @@ function setup() {
 function draw() {
   background(0);
 
-  rotateY(frameCount * 0.0015);
-  rotateX(frameCount * 0.0007);
-
-  for (let e of estrellas) {
-    push();
-    translate(e.x, e.y, e.z);
-    noStroke();
-    fill(255);
-    sphere(e.s);
-    pop();
-  }
-
-  push();
+  // --- ESTRELLAS DE GALAXIA ---
   noStroke();
-  fill(255, 100, 200, 40);
-  for (let i = 0; i < 20; i++) {
-    rotateY(0.1);
-    ellipse(0, 0, 900 + i * 40, 300 + i * 15);
-  }
-  pop();
+  for (let s of stars) {
+    fill(150 + random(80), 0, 255); 
+    circle(s.x, s.y, s.z * 2);
 
-  for (let i = 0; i < fotos.length; i++) {
-    push();
-    rotateY(frameCount * 0.002 + i);
-    translate(350 * cos(i + frameCount * 0.002), 200 * sin(i + 1), -400);
-    texture(fotos[i]);
-    plane(200, 200);
-    pop();
+    s.x += (mouseX - width / 2) * 0.0005 * s.z;
+    s.y += (mouseY - height / 2) * 0.0005 * s.z;
   }
 
-  for (let i = 0; i < 6; i++) {
-    push();
-    rotateY(frameCount * 0.003 + i);
-    translate(250 * cos(i * 2), 150 * sin(i * 1.3), -200);
-    texture(corazones[0]);
-    plane(120, 120);
-    pop();
+  // --- CORAZONES FLOTANDO ---
+  for (let h of hearts) {
+    drawHeart(h.x, h.y, h.size);
+    h.y -= h.speed;
+
+    if (h.y < -50) {
+      h.y = height + 50;
+      h.x = random(width);
+    }
   }
 
+  // Textito suave opcional
+  fill(255, 120, 200);
+  textAlign(CENTER);
+  textSize(28);
+  text("Mi galaxia 💜", width / 2, height - 40);
+}
+
+// Dibuja corazones
+function drawHeart(x, y, size) {
   push();
-  fill(255);
-  textSize(55);
-  textAlign(CENTER, CENTER);
-  text(textos[int(frameCount / 120) % textos.length], 0, 0);
+  translate(x, y);
+  fill(255, 0, 120, 180);
+  noStroke();
+  beginShape();
+  for (let t = 0; t < TWO_PI; t += 0.01) {
+    let px = 16 * pow(sin(t), 3);
+    let py = -(13 * cos(t) - 5 * cos(2 * t) - 2 * cos(3 * t) - cos(4 * t));
+    vertex(px * size * 0.1, py * size * 0.1);
+  }
+  endShape(CLOSE);
   pop();
 }
 
