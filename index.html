@@ -3,14 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Galaxia del Amor</title>
+    <title>🌟 Galaxia del Amor 💖</title>
 
-    <!-- p5.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/addons/p5.sound.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.3/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.3/addons/p5.sound.min.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Oculta barras de desplazamiento */
+            background-color: black;
+            display: flex; /* Centrado opcional */
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+    </style>
 </head>
 
-<body style="margin:0; overflow:hidden; background:black;">
+<body>
     <script src="sketch.js"></script>
+    
+    <div id="instruccion-audio" style="position: fixed; top: 10px; color: white; font-family: sans-serif; font-size: 16px;">
+        Haz clic en cualquier parte para iniciar la música 🎵
+    </div>
+    
+    <script>
+        // Pequeño script para iniciar el audio al hacer clic y ocultar la instrucción.
+        document.body.addEventListener('click', () => {
+            if (typeof userStartAudio !== 'undefined') {
+                userStartAudio();
+            }
+            const instruccion = document.getElementById('instruccion-audio');
+            if (instruccion) {
+                instruccion.style.display = 'none';
+            }
+        });
+    </script>
 </body>
 </html>
