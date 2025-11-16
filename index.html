@@ -2,44 +2,41 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
   <title>Galaxia de Amor</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
 </head>
 <body style="margin:0; overflow:hidden;">
 <script>
-/*
-  Galaxia de Amor - p5.js (WEBGL)
-  Controles:
-    - Arrastrar con el mouse: rotar la escena
-    - Rueda del mouse: zoom in/out
-    - Clic izquierdo: generar corazones en la posición del clic
-    - Barra espaciadora: pausar/reanudar
-  Puedes cambiar textos/colores/velocidades abajo en la sección de configuración.
-*/
+/* ================================
+   GALAXIA DE AMOR – PC + MÓVIL
+   ================================ */
 
 let stars = [];
 let galaxyParticles = [];
 let hearts = [];
-let orbitingTexts = ["TE AMO", "MI VIDA", "MI LUZ", "CONTIGO", "POR SIEMPRE"];
+let orbitingTexts = ["TE AMO", "MI VIDA", "MI ESTRELLA", "SIEMPRE TÚ", "CONTIGO"];
 let rotX = 0, rotY = 0;
 let lastMouseX = 0, lastMouseY = 0, dragging = false;
 let zoom = 1.0;
 let paused = false;
 
-// Configuración fácil de modificar
+// Variables para móvil (pinch zoom)
+let lastDist = 0;
+let doubleTapTime = 0;
+
 const CONFIG = {
   starCount: 600,
   galaxyParticlesCount: 1200,
   galaxyRadius: 420,
   galaxySpiralTurns: 3.2,
   galaxyRotationSpeed: 0.002,
-  textRings: [220, 300], // radios de anillos donde orbitan textos
-  textSpeed: 0.8, // multiplicador de velocidad de rotación de textos
+  textRings: [220, 300],
+  textSpeed: 0.8,
   heartSize: 8,
   heartSpawnOnClick: 8,
   backgroundColor: [0,0,0],
-  sunColor: [255, 200, 100],
+  sunColor: [255,200,100],
   heartColor: [255,80,120],
   smallHeartColor: [255,150,180]
 };
@@ -48,30 +45,35 @@ function setup(){
   createCanvas(windowWidth, windowHeight, WEBGL);
   textFont('Helvetica');
   textAlign(CENTER, CENTER);
-  // Crear estrellas de fondo (posiciones en esfera lejana)
+
+  // Estrellas del espacio
   for(let i=0;i<CONFIG.starCount;i++){
     stars.push({
-      x: random(-1000,1000),
+      x: random(-2000,2000),
       y: random(-2000,2000),
       z: random(-2000,-200),
-      size: random(1.6,2.4),
+      size: random(0.6,2.4),
       twinkle: random(0.2,1.0)
     });
   }
-  // Partículas de la galaxia (espiral)
+
+  // Partículas de la galaxia
   for(let i=0;i<CONFIG.galaxyParticlesCount;i++){
     let t = random();
     let angle = t * CONFIG.galaxySpiralTurns * TWO_PI + random(-0.4,0.4);
     let r = t * CONFIG.galaxyRadius * (0.15 + random(0.85));
-    // añadir desviación para grosor del brazo
+
     let offset = p5.Vector.fromAngle(angle + HALF_PI).mult(random(-40,40));
     let x = cos(angle) * r + offset.x;
-    let y = random(-40,40) * (1 - t); // aplanamiento
+    let y = random(-40,40) * (1 - t);
     let z = sin(angle) * r + offset.y;
+
     let hue = lerpColor(color(120,120,255), color(255,200,120), t);
-    galaxyParticles.push({x,y,z,angle,r,t, hue, size: random(0.6,2.6)});
+
+    galaxyParticles.push({x,y,z,angle,r,t,hue,size:random(0.6,2.6)});
   }
-  // Pequeños corazones decorativos estáticos
+
+  // Corazones decorativos
   for(let i=0;i<80;i++){
     hearts.push({
       x: random(-900,900),
@@ -80,7 +82,7 @@ function setup(){
       size: random(2,6),
       vx: random(-0.2,0.2),
       vy: random(-0.1,0.1),
-      life: random(200, 600),
+      life: random(200,600),
       color: CONFIG.smallHeartColor.slice()
     });
   }
@@ -91,53 +93,40 @@ function windowResized(){
 }
 
 function draw(){
-  if(paused){ // si está pausado, sólo dibuja semiestático
+  if(paused){
     background(CONFIG.backgroundColor);
     displayScene(0);
     return;
   }
+
   background(CONFIG.backgroundColor);
 
-  // ligera gradiente radial para dar profundidad (falso pero bonito)
-  push();
-  translate(0,0,-100);
-  noStroke();
-  for(let i=0;i<6;i++){
-    let s = map(i,0,5,1400,200);
-    let a = map(i,0,5,8,0);
-    fill(0,0,0,a);
-    ellipse(0,0,s,s);
-  }
-  pop();
-
-  // Actualizar partículas del galaxy (rotación)
+  // Actualizar galaxia
   for(let p of galaxyParticles){
-    p.angle += CONFIG.galaxyRotationSpeed * (1 - p.t*0.6);
-    // recompute pos (mantener r)
+    p.angle += CONFIG.galaxyRotationSpeed;
     p.x = cos(p.angle) * p.r;
     p.z = sin(p.angle) * p.r;
   }
 
-  // Actualizar corazones pequeños
-  for(let i = hearts.length-1; i>=0; i--){
+  // Corazones flotantes
+  for(let i = hearts.length - 1; i >= 0; i--){
     let h = hearts[i];
     h.x += h.vx;
     h.y += h.vy;
-    h.life -= 1;
-    if(h.life<=0 || abs(h.x) > 3000 || abs(h.y) > 3000) hearts.splice(i,1);
+    h.life--;
+    if(h.life <= 0) hearts.splice(i,1);
   }
 
   displayScene(frameCount);
 }
 
 function displayScene(tframe){
-  // controles de cámara: rotación global y zoom
   push();
   scale(zoom);
   rotateX(rotX);
   rotateY(rotY);
 
-  // Dibujar estrellas de fondo (puntos fijos lejos)
+  // Estrellas del fondo
   push();
   translate(0,0,-1500);
   for(let s of stars){
@@ -151,127 +140,85 @@ function displayScene(tframe){
   }
   pop();
 
-  // Luz ambiental suave
-  ambientLight(90);
-  pointLight(255,255,240, 0,0,400);
+  // Luz ambiente
+  ambientLight(80);
+  pointLight(255,255,240, 0,0,300);
 
-  // Sol / centro brillante
+  // Sol central
   push();
-  rotateY(tframe*0.0015); // giro del sol
+  rotateY(tframe*0.001);
   noStroke();
-  // corona
-  for(let i=6;i>=1;i--){
-    let a = map(i,1,6,14,2);
-    fill(CONFIG.sunColor[0], CONFIG.sunColor[1], CONFIG.sunColor[2], a*6);
-    sphere(38 + i*20, 16, 16);
-  }
-  // núcleo
   fill(255, 220, 120);
-  sphere(36, 20, 20);
+  sphere(40, 20, 20);
   pop();
 
-  // Dibujar partículas de la galaxia
-  push();
+  // Partículas de la galaxia
   for(let p of galaxyParticles){
     push();
     translate(p.x, p.y, p.z);
-    // brillo variable según distancia al centro
-    let distCenter = sqrt(p.x*p.x + p.z*p.z);
-    let alpha = map(distCenter, 0, CONFIG.galaxyRadius, 180, 30);
+    let col = p.hue;
+    fill(red(col), green(col), blue(col), 150);
     noStroke();
-    // usar su "hue" guardado (p.hue es un p5 Color)
-    let c = p.hue;
-    fill(red(c), green(c), blue(c), alpha);
     sphere(p.size, 6, 6);
     pop();
   }
-  pop();
 
-  // Textos orbitando en anillos
-  push();
+  // Textos orbitando
   for(let ri=0; ri<CONFIG.textRings.length; ri++){
     let R = CONFIG.textRings[ri];
-    let baseAngle = tframe * 0.001 * CONFIG.textSpeed * (ri%2 ? -1 : 1) * (1 + ri*0.25);
+    let base = tframe*0.001*(ri%2?-1:1);
     for(let i=0;i<orbitingTexts.length;i++){
-      let a = baseAngle + (i/orbitingTexts.length) * TWO_PI;
-      // pequeña oscilacion en y
-      let y = sin(a*2 + ri) * 18;
-      let x = cos(a) * R;
-      let z = sin(a) * R;
+      let a = base + (i/orbitingTexts.length)*TWO_PI;
+      let x = cos(a)*R;
+      let z = sin(a)*R;
+      let y = sin(a*3)*10;
+
       push();
-      translate(x, y, z);
-      // orientar texto hacia afuera/suavizar legibilidad
-      // rotar para que cara del texto mire hacia camara aproximada
-      rotateY(-rotY); // ayuda a que siempre se vea "frente"
-      rotateX(0.12 * sin(tframe*0.003 + i));
-      // texto estilos
-      let scaleFactor = 1 + 0.15 * sin(tframe*0.02 + i);
-      scale(scaleFactor);
-      fill(255, 220 - ri*30);
-      noStroke();
-      // caja de glow
-      push();
-      rotateY(HALF_PI);
-      // glow detrás
-      for(let g=6; g>=1; g--){
-        fill(255, 50 + g*10 - ri*10);
-        text(orbitingTexts[i], 0, 0);
-      }
-      // texto principal
-      fill(255, 255, 255);
-      textStyle(BOLD);
-      textSize(22 + ri*6);
-      text(orbitingTexts[i], 0, 0);
-      pop();
+      translate(x,y,z);
+      rotateY(-rotY);
+      fill(255);
+      textSize(26);
+      text(orbitingTexts[i], 0,0);
       pop();
     }
   }
-  pop();
 
-  // Dibujar corazones (estáticos o generados)
-  push();
+  // Corazones
   for(let h of hearts){
     push();
-    translate(h.x, h.y, h.z);
-    // pulsación
-    let s = h.size * (1 + 0.08 * sin(tframe*0.05 + h.x*0.01));
-    drawHeart(0,0,s, h.color);
+    translate(h.x,h.y,h.z);
+    drawHeart(0,0,h.size,h.color);
     pop();
   }
-  pop();
 
-  pop(); // end camera transforms
+  pop();
 }
 
-// dibuja un corazón simple en (x,y) con tamaño s y color array RGB(A)
-function drawHeart(x,y,s, col){
+function drawHeart(x,y,s,col){
   noStroke();
-  push();
-  translate(x,y);
-  fill(col[0], col[1], col[2], col[3] ?? 255);
+  fill(col);
   beginShape();
-  vertex(0, -s*0.35);
-  bezierVertex(s*0.7, -s*0.95, s*1.6, -s*0.05, 0, s*1.05);
-  bezierVertex(-s*1.6, -s*0.05, -s*0.7, -s*0.95, 0, -s*0.35);
+  vertex(0,-s*0.3);
+  bezierVertex(s*0.6,-s*0.8, s*1.6,-s*0.05, 0,s*1.2);
+  bezierVertex(-s*1.6,-s*0.05, -s*0.6,-s*0.8, 0,-s*0.3);
   endShape(CLOSE);
-  pop();
 }
 
-// Interacción: drag para rotar
+/* ======================
+   PC: MOUSE INTERACCIÓN
+   ====================== */
 function mousePressed(){
-  if (mouseButton === LEFT){
-    lastMouseX = mouseX;
-    lastMouseY = mouseY;
-    dragging = true;
-    // crear corazones si clic rápido sin mover mucho
-    // (esto lo manejamos en mouseClicked para agregar varios)
-  }
+  lastMouseX = mouseX;
+  lastMouseY = mouseY;
+  dragging = true;
+
+  spawnHearts(mouseX, mouseY);
 }
 
 function mouseDragged(){
   if(dragging){
-    let dx = (mouseX - lastMouseX) * 0.01;
-    let dy = (mouseY - lastMouseY) * 0.01;
+    let dx = (mouseX - lastMouseX)*0.01;
+    let dy = (mouseY - lastMouseY)*0.01;
     rotY += dx;
     rotX -= dy;
     lastMouseX = mouseX;
@@ -283,43 +230,85 @@ function mouseReleased(){
   dragging = false;
 }
 
-function mouseWheel(event){
-  // event.delta positivo => scroll hacia abajo
-  zoom *= (1 - event.delta * 0.0008);
-  zoom = constrain(zoom, 0.35, 2.5);
-  return false; // prevenir scroll de la página
+function mouseWheel(e){
+  zoom *= (1 - e.delta * 0.0005);
+  zoom = constrain(zoom, 0.3, 3.0);
 }
 
-function mouseClicked(){
-  if(mouseButton === LEFT){
-    // generar varios corazones cerca del punto de clic (convertir clic 2D a coordenadas 3D aproximadas)
-    // aproximamos: usar transformación inversa básica
-    let nx = (mouseX - width/2) / zoom;
-    let ny = (mouseY - height/2) / zoom;
-    // aplicar rotaciones inversas (aprox)
-    let ix = nx * cos(rotY) - ny * sin(rotX)*0 + 0; // simplificación
-    // colocar en frente de la cámara (z negativo)
-    for(let i=0;i<CONFIG.heartSpawnOnClick;i++){
-      hearts.push({
-        x: nx + random(-40,40),
-        y: ny + random(-40,40),
-        z: random(-200,200),
-        size: random(CONFIG.heartSize*0.6, CONFIG.heartSize*1.6),
-        vx: random(-0.6,0.6),
-        vy: random(-0.4,0.4),
-        life: random(220,420),
-        color: [CONFIG.heartColor[0], CONFIG.heartColor[1], CONFIG.heartColor[2], 220]
-      });
-    }
+/* =======================
+   MÓVIL: TOUCH INTERACCIÓN
+   ======================= */
+function touchStarted(){
+  // doble tap para zoom
+  let t = millis();
+  if(t - doubleTapTime < 250){
+    zoom = constrain(zoom * 1.25, 0.3, 3.0);
+  }
+  doubleTapTime = t;
+
+  if(touches.length === 1){
+    lastMouseX = touches[0].x;
+    lastMouseY = touches[0].y;
+    dragging = true;
+    spawnHearts(touches[0].x, touches[0].y);
+  }
+
+  if(touches.length === 2){
+    lastDist = dist(touches[0].x, touches[0].y, touches[1].x, touches[1].y);
   }
 }
 
-// pausa con espacio
+function touchMoved(){
+  if(touches.length === 1){
+    // rotar
+    let dx = (touches[0].x - lastMouseX)*0.01;
+    let dy = (touches[0].y - lastMouseY)*0.01;
+    rotY += dx;
+    rotX -= dy;
+    lastMouseX = touches[0].x;
+    lastMouseY = touches[0].y;
+  }
+
+  if(touches.length === 2){
+    // pinch zoom
+    let d = dist(touches[0].x, touches[0].y, touches[1].x, touches[1].y);
+    zoom *= 1 + (d - lastDist)*0.002;
+    zoom = constrain(zoom, 0.3, 3.5);
+    lastDist = d;
+  }
+
+  return false;
+}
+
+function touchEnded(){
+  dragging = false;
+}
+
+/* ========================
+   Crear Corazones
+   ======================== */
+function spawnHearts(px,py){
+  for(let i=0;i<CONFIG.heartSpawnOnClick;i++){
+    hearts.push({
+      x: (px - width/2) / zoom,
+      y: (py - height/2) / zoom,
+      z: random(-200,200),
+      size: random(6,14),
+      vx: random(-0.5,0.5),
+      vy: random(-0.5,0.5),
+      life: random(200,400),
+      color: CONFIG.heartColor
+    });
+  }
+}
+
+/* Pausar */
 function keyPressed(){
   if(key === ' '){
     paused = !paused;
   }
 }
+
 </script>
 </body>
 </html>
