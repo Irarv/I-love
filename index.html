@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Galaxia de Amor 3D (Estable)</title>
+    <title>Galaxia de Amor (Inicio Directo)</title>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.3/p5.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.3/addons/p5.sound.min.js"></script>
 
     <style>
         body {
@@ -21,24 +20,5 @@
 
 <body>
     <script src="sketch.js"></script>
-    
-    <div id="instruccion-audio" style="position: fixed; top: 10px; width: 100%; text-align: center; color: white; font-family: sans-serif; font-size: 18px; z-index: 100;">
-        ✨ Haz clic en cualquier lugar para iniciar la Galaxia y la Música ✨
-    </div>
-    
-    <script>
-        // Esta función resuelve el problema de "autoplay" de navegadores.
-        document.body.addEventListener('click', () => {
-            // Inicia el contexto de audio
-            if (typeof userStartAudio !== 'undefined') {
-                userStartAudio();
-            }
-            // Oculta el mensaje
-            const instruccion = document.getElementById('instruccion-audio');
-            if (instruccion) {
-                instruccion.style.display = 'none';
-            }
-        }, { once: true }); // Solo se ejecuta la primera vez que haces clic
-    </script>
 </body>
 </html>
