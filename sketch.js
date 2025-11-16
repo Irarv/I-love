@@ -3,10 +3,11 @@ let stars = [];
 let hearts = [];
 let textos = ["MI VIDA", "MI AMOR", "MI CIELO", "TE ADORO", "ERES MI TODO", "PARA SIEMPRE"];
 let musica;
-let fuente;
-let recursosCargados = false; // Nueva bandera para verificar la carga
+// Usamos una fuente genérica del sistema para evitar fallos de carga
+let fuente = 'sans-serif'; 
 
-// --- Clase Corazón 3D (Sin Cambios, Lógica de Dibujo) ---
+// --- Clases Star y Heart (Sin Cambios, son estables) ---
+
 class Heart {
   constructor() {
     this.x = random(-600, 600);
@@ -42,7 +43,6 @@ class Heart {
   }
 }
 
-// --- Clase Estrella (Sin Cambios) ---
 class Star {
   constructor() {
     this.x = random(-3000, 3000);
@@ -61,84 +61,48 @@ class Star {
   }
 }
 
+
 // --- Funciones de p5.js ---
 
 function preload() {
-  // 1. Cargar Fuente (con verificación de éxito/error)
-  loadFont(
-    "https://cdnjs.cloudflare.com/ajax/libs/topcoat/0.8.0/font/SourceCodePro-Regular.otf",
-    (f) => {
-      fuente = f;
-      console.log("Fuente cargada con éxito.");
-      // La música se carga dentro del callback de la fuente para asegurar la secuencia
-      cargarMusica(); 
-    },
-    (error) => {
-      // Si falla, se usa la fuente predeterminada (aunque no se vea en WEBGL)
-      console.error("ERROR: No se pudo cargar la fuente. Usando fuente predeterminada.", error);
-      fuente = 'sans-serif'; // Fallback
-      cargarMusica(); // Continuar con la carga de música
-    }
+  // Solo se intenta cargar la música. Si falla, el programa sigue.
+  musica = loadSound(
+    "https://cdn.pixabay.com/download/audio/2022/03/15/audio_66449b881e.mp3?filename=deep-ambient-110624.mp3",
+    () => console.log("Música cargada con éxito."),
+    (error) => console.error("Error al cargar la música. El sketch seguirá sin audio.", error)
   );
 }
 
-function cargarMusica() {
-    // 2. Cargar Música (con verificación de éxito/error)
-    musica = loadSound(
-        "https://cdn.pixabay.com/download/audio/2022/03/15/audio_66449b881e.mp3?filename=deep-ambient-110624.mp3",
-        () => {
-            console.log("Música cargada con éxito.");
-            recursosCargados = true; // Marcar que todo está listo
-        },
-        (error) => {
-            console.error("ERROR: No se pudo cargar la música. El sketch continuará sin audio.", error);
-            // Marcar como cargado para que el sketch inicie aunque no haya música
-            recursosCargados = true; 
-        }
-    );
-}
-
-
 function setup() {
+  // Inicializa el canvas 3D
   createCanvas(windowWidth, windowHeight, WEBGL);
   
-  // Inicializar estrellas (Galaxia)
+  // Inicializar objetos
   for (let i = 0; i < 2000; i++) {
     stars.push(new Star());
   }
-
-  // Inicializar corazones
   for (let i = 0; i < 70; i++) {
     hearts.push(new Heart());
   }
 
-  // Aplicar la fuente si se cargó correctamente
-  if (fuente && typeof fuente !== 'string') {
-    textFont(fuente);
-  }
+  // Configuración de texto
+  // IMPORTANTE: Ya no cargamos fuente, usamos una genérica del sistema.
+  textSize(80); 
+  textAlign(CENTER, CENTER);
+  textFont(fuente);
   
-  // Música: Inicializar volumen, el loop se inicia en el draw después del chequeo.
-  musica.setVolume(0.4);
+  // Configuración de música (si cargó)
+  if (musica.isLoaded()) {
+    musica.setVolume(0.4);
+    // Nota: El loop se inicia al hacer clic en el body (ver index.html)
+  }
 }
 
 function draw() {
-    // **VERIFICACIÓN CRUCIAL:** Si los recursos aún no están cargados,
-    // solo dibuja un fondo y un mensaje de "Cargando..."
-    if (!recursosCargados) {
-        background(0);
-        fill(255);
-        textSize(32);
-        textAlign(CENTER, CENTER);
-        // Mostrar "Cargando" al centro de la pantalla
-        text("Cargando la Galaxia de Amor...", 0, 0); 
-        return; // Detener la ejecución del resto de draw
-    }
+    background(0); // Fondo negro
     
-    // Si los recursos YA están cargados, continuar con la animación:
-    background(0);
-
-    // Música: Iniciar el loop solo si está cargada y no está sonando (evitar múltiples inicios)
-    if (musica.isLoaded() && !musica.isLooping()) {
+    // Iniciar la música al hacer clic (si ya se cargó)
+    if (musica.isLoaded() && !musica.isLooping() && getAudioContext().state === 'running') {
         musica.loop();
     }
 
@@ -147,6 +111,7 @@ function draw() {
     rotateX(frameCount * 0.0005);
 
     // 1. Dibujar Estrellas
+    stroke(255);
     for (let s of stars) {
         s.show();
     }
@@ -174,8 +139,6 @@ function draw() {
     let textoActual = textos[int(frameCount / 120) % textos.length];
     
     fill(255, 150, 220);
-    textSize(80);
-    textAlign(CENTER, CENTER);
     text(textoActual, 0, 0, 0); 
     pop();
 
