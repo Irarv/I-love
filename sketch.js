@@ -2,9 +2,14 @@
 let stars = [];
 let hearts = [];
 let textos = ["MI VIDA", "MI AMOR", "MI CIELO", "TE ADORO", "ERES MI TODO", "PARA SIEMPRE"];
-let fuente = 'sans-serif'; // Usamos una fuente del sistema
+let fuente;
 
-// --- Clases Heart y Star (Iguales) ---
+// --- Cargar fuente válida para WEBGL ---
+function preload() {
+  fuente = loadFont("https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-regular-webfont.ttf");
+}
+
+// --- Clases Heart y Star ---
 
 class Heart {
   constructor() {
@@ -59,75 +64,61 @@ class Star {
   }
 }
 
-
-// --- Funciones de p5.js ---
-
-function preload() {
-  // Preload está vacío para asegurar la carga instantánea.
-}
+// --- p5.js ---
 
 function setup() {
   createCanvas(windowWidth, windowHeight, WEBGL);
-  
-  // Inicializar objetos
-  for (let i = 0; i < 2000; i++) {
-    stars.push(new Star());
-  }
-  for (let i = 0; i < 70; i++) {
-    hearts.push(new Heart());
-  }
 
-  // Configuración de texto
-  textSize(80); 
-  textAlign(CENTER, CENTER);
+  // Inicializar objetos
+  for (let i = 0; i < 2000; i++) stars.push(new Star());
+  for (let i = 0; i < 70; i++) hearts.push(new Heart());
+
+  // Configurar texto
   textFont(fuente);
+  textSize(80);
+  textAlign(CENTER, CENTER);
 }
 
 function draw() {
-    background(0); // Fondo negro
+  background(0);
 
-    // Rotación general de la vista
-    rotateY(frameCount * 0.001);
-    rotateX(frameCount * 0.0005);
+  // Rotación general
+  rotateY(frameCount * 0.001);
+  rotateX(frameCount * 0.0005);
 
-    // 1. Dibujar Estrellas
-    stroke(255);
-    for (let s of stars) {
-        s.show();
-    }
-    
-    // 2. Dibujar Corazones 3D
-    for (let h of hearts) {
-        h.move();
-        h.show();
-    }
-    
-    // 3. Galaxia (Disco espiral suave)
-    push();
-    rotateY(frameCount * 0.0008);
-    noStroke();
-    fill(255, 80, 180, 30);
-    for (let i = 0; i < 40; i++) {
-        ellipse(0, 0, 1500 + i * 30, 300 + i * 10);
-    }
-    pop();
+  // Estrellas
+  for (let s of stars) s.show();
 
-    // 4. Texto Romántico (Centro de la Galaxia)
-    push();
-    rotateY(-frameCount * 0.002); 
-    
-    let textoActual = textos[int(frameCount / 120) % textos.length];
-    
-    fill(255, 150, 220);
-    text(textoActual, 0, 0, 0); 
-    pop();
+  // Corazones
+  for (let h of hearts) {
+    h.move();
+    h.show();
+  }
 
-    // 5. Sol/Núcleo Brillante
-    push();
-    fill(255, 180, 50, 200);
-    noStroke();
-    sphere(30);
-    pop();
+  // Galaxia
+  push();
+  rotateY(frameCount * 0.0008);
+  noStroke();
+  fill(255, 80, 180, 30);
+  for (let i = 0; i < 40; i++) {
+    ellipse(0, 0, 1500 + i * 30, 300 + i * 10);
+  }
+  pop();
+
+  // Texto romántico
+  push();
+  rotateY(-frameCount * 0.002);
+  let textoActual = textos[int(frameCount / 120) % textos.length];
+  fill(255, 150, 220);
+  text(textoActual, 0, 0, 0);
+  pop();
+
+  // Sol / núcleo
+  push();
+  fill(255, 180, 50, 200);
+  noStroke();
+  sphere(30);
+  pop();
 }
 
 function windowResized() {
