@@ -1,15 +1,31 @@
-// --- Variables Globales ---
+// ----- VARIABLES -----
 let stars = [];
 let hearts = [];
-let textos = ["MI VIDA", "MI AMOR", "MI CIELO", "TE ADORO", "ERES MI TODO", "PARA SIEMPRE"];
+let textos = ["MI VIDA", "MI AMOR", "TE ADORO", "MI CIELO", "ERES TODO PARA MI", "PARA SIEMPRE JUNTOS"];
 let fuente;
 
-// --- Cargar fuente válida para WEBGL ---
+// ----- Cargar fuente válida (FUNCIONA EN WEBGL) -----
 function preload() {
-  fuente = loadFont("https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-regular-webfont.ttf");
+  fuente = loadFont("https://raw.githubusercontent.com/google/fonts/main/apache/roboto/Roboto-Regular.ttf");
 }
 
-// --- Clases Heart y Star ---
+// ----- CLASES -----
+class Star {
+  constructor() {
+    this.x = random(-2500, 2500);
+    this.y = random(-2500, 2500);
+    this.z = random(-2500, 2500);
+    this.size = random(1, 3);
+  }
+  show() {
+    push();
+    translate(this.x, this.y, this.z);
+    stroke(255);
+    strokeWeight(this.size);
+    point(0, 0);
+    pop();
+  }
+}
 
 class Heart {
   constructor() {
@@ -17,23 +33,21 @@ class Heart {
     this.y = random(-400, 400);
     this.z = random(-300, 300);
     this.size = random(15, 30);
-    this.speed = random(0.005, 0.015);
+    this.speed = random(0.01, 0.02);
   }
 
   move() {
-    this.tx = this.x + sin(frameCount * this.speed * 2 + this.x * 0.01) * 80;
-    this.ty = this.y + cos(frameCount * this.speed * 2 + this.y * 0.01) * 80;
-    this.tz = this.z + sin(frameCount * this.speed + this.z * 0.01) * 50;
+    this.tx = this.x + sin(frameCount * this.speed) * 60;
+    this.ty = this.y + cos(frameCount * this.speed) * 60;
+    this.tz = this.z;
   }
 
   show() {
     push();
     translate(this.tx, this.ty, this.tz);
-    rotateX(frameCount * this.speed * 0.5);
-    rotateY(frameCount * this.speed);
-    fill(255, 0, 140, 200);
+    rotateY(frameCount * 0.02);
+    fill(255, 0, 150);
     noStroke();
-    
     beginShape();
     for (let t = 0; t < TWO_PI; t += 0.05) {
       let x = 16 * pow(sin(t), 3);
@@ -41,83 +55,65 @@ class Heart {
       vertex(x * this.size * 0.05, y * this.size * 0.05);
     }
     endShape(CLOSE);
-    
     pop();
   }
 }
 
-class Star {
-  constructor() {
-    this.x = random(-3000, 3000);
-    this.y = random(-3000, 3000);
-    this.z = random(-3000, 3000);
-    this.size = random(1, 3);
-  }
-
-  show() {
-    push();
-    translate(this.x, this.y, this.z);
-    strokeWeight(this.size);
-    stroke(255);
-    point(0, 0);
-    pop();
-  }
-}
-
-// --- p5.js ---
-
+// ----- INICIO -----
 function setup() {
   createCanvas(windowWidth, windowHeight, WEBGL);
 
-  // Inicializar objetos
-  for (let i = 0; i < 2000; i++) stars.push(new Star());
-  for (let i = 0; i < 70; i++) hearts.push(new Heart());
+  // estrellas
+  for (let i = 0; i < 1500; i++) stars.push(new Star());
 
-  // Configurar texto
+  // corazones
+  for (let i = 0; i < 50; i++) hearts.push(new Heart());
+
+  // texto
   textFont(fuente);
-  textSize(80);
+  textSize(70);
   textAlign(CENTER, CENTER);
 }
 
+// ----- DIBUJAR -----
 function draw() {
   background(0);
 
-  // Rotación general
   rotateY(frameCount * 0.001);
   rotateX(frameCount * 0.0005);
 
-  // Estrellas
-  for (let s of stars) s.show();
-
-  // Corazones
-  for (let h of hearts) {
-    h.move();
-    h.show();
-  }
-
-  // Galaxia
+  // galaxia rosa
   push();
   rotateY(frameCount * 0.0008);
+  fill(255, 80, 180, 40);
   noStroke();
-  fill(255, 80, 180, 30);
   for (let i = 0; i < 40; i++) {
     ellipse(0, 0, 1500 + i * 30, 300 + i * 10);
   }
   pop();
 
-  // Texto romántico
+  // estrellas
+  for (let s of stars) s.show();
+
+  // corazones
+  for (let h of hearts) {
+    h.move();
+    h.show();
+  }
+
+  // texto romántico
   push();
   rotateY(-frameCount * 0.002);
-  let textoActual = textos[int(frameCount / 120) % textos.length];
   fill(255, 150, 220);
-  text(textoActual, 0, 0, 0);
+  let frase = textos[int(frameCount / 100) % textos.length];
+  text(frase, 0, 0);
   pop();
 
-  // Sol / núcleo
+  // sol central
   push();
-  fill(255, 180, 50, 200);
+  fill(255, 200, 50, 220);
   noStroke();
-  sphere(30);
+  sphere(35);
   pop();
 }
 
