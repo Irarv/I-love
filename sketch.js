@@ -5,23 +5,20 @@ let musica;
 let fuente;
 
 function preload() {
-  // Fuente para WEBGL (obligatorio)
-  fuente = loadFont("https://cdnjs.cloudflare.com/ajax/libs/topcoat/0.8.0/font/SourceCodePro-Regular.otf");
+  // Usa una fuente de Google Fonts via un archivo TTF directo
+  fuente = loadFont("https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-regular-webfont.ttf");
 
-  // Música
   musica = loadSound("https://cdn.pixabay.com/download/audio/2022/03/15/audio_66449b881e.mp3?filename=deep-ambient-110624.mp3");
 }
 
 function setup() {
   createCanvas(windowWidth, windowHeight, WEBGL);
 
-  // Música
   userStartAudio().then(() => {
     musica.setVolume(0.4);
     musica.loop();
   });
 
-  // Estrellas
   for (let i = 0; i < 1500; i++) {
     stars.push({
       x: random(-3000, 3000),
@@ -31,7 +28,6 @@ function setup() {
     });
   }
 
-  // Corazones pequeños
   for (let i = 0; i < 50; i++) {
     hearts.push({
       x: random(-600, 600),
@@ -41,17 +37,16 @@ function setup() {
     });
   }
 
-  // Aplicar fuente cargada
-  textFont(fuente);
+  textFont(fuente); // importante
+  textSize(60);
 }
 
 function draw() {
   background(0);
-
   rotateY(frameCount * 0.002);
   rotateX(frameCount * 0.001);
 
-  // Galaxia rosada
+  // Galaxia
   push();
   rotateY(frameCount * 0.0008);
   noStroke();
@@ -84,16 +79,14 @@ function draw() {
     pop();
   }
 
-  // Texto romántico (¡ya funciona!)
+  // Texto romántico
   push();
   rotateY(-frameCount * 0.002);
   fill(255, 150, 220);
-  textSize(60);
-  textAlign(CENTER, CENTER);
   text(textos[int(frameCount / 80) % textos.length], 0, 0);
   pop();
 
-  // Sol brillante
+  // “Sol”
   push();
   fill(255, 180, 50, 200);
   noStroke();
@@ -101,7 +94,6 @@ function draw() {
   pop();
 }
 
-// Dibujar corazón
 function drawHeart(size) {
   push();
   fill(255, 0, 140);
