@@ -4,39 +4,33 @@ let hearts = [];
 let textos = ["MI VIDA", "MI AMOR", "MI CIELO", "TE ADORO", "ERES MI TODO", "PARA SIEMPRE"];
 let musica;
 let fuente;
+let recursosCargados = false; // Nueva bandera para verificar la carga
 
-// --- Clase Corazón 3D ---
+// --- Clase Corazón 3D (Sin Cambios, Lógica de Dibujo) ---
 class Heart {
   constructor() {
     this.x = random(-600, 600);
     this.y = random(-400, 400);
     this.z = random(-300, 300);
-    this.size = random(15, 30); // Corazones pequeños
+    this.size = random(15, 30);
     this.speed = random(0.005, 0.015);
   }
 
-  // Movimiento oscilatorio suave
   move() {
     this.tx = this.x + sin(frameCount * this.speed * 2 + this.x * 0.01) * 80;
     this.ty = this.y + cos(frameCount * this.speed * 2 + this.y * 0.01) * 80;
     this.tz = this.z + sin(frameCount * this.speed + this.z * 0.01) * 50;
   }
 
-  // Dibujo del corazón
   show() {
     push();
     translate(this.tx, this.ty, this.tz);
-    
-    // Rotación lenta e individual
     rotateX(frameCount * this.speed * 0.5);
     rotateY(frameCount * this.speed);
-    
-    // Dibujar la forma 2D del corazón (se ve 3D por la rotación en el espacio 3D)
-    fill(255, 0, 140, 200); // Rosa intenso
+    fill(255, 0, 140, 200);
     noStroke();
     
     beginShape();
-    // Fórmula paramétrica del corazón
     for (let t = 0; t < TWO_PI; t += 0.05) {
       let x = 16 * pow(sin(t), 3);
       let y = -(13 * cos(t) - 5 * cos(2 * t) - 2 * cos(3 * t) - cos(4 * t));
@@ -48,7 +42,7 @@ class Heart {
   }
 }
 
-// --- Clase Estrella ---
+// --- Clase Estrella (Sin Cambios) ---
 class Star {
   constructor() {
     this.x = random(-3000, 3000);
@@ -61,7 +55,7 @@ class Star {
     push();
     translate(this.x, this.y, this.z);
     strokeWeight(this.size);
-    stroke(255); // Color blanco
+    stroke(255);
     point(0, 0);
     pop();
   }
@@ -70,25 +64,44 @@ class Star {
 // --- Funciones de p5.js ---
 
 function preload() {
-  // Carga la fuente para el texto 3D
-  fuente = loadFont("https://cdnjs.cloudflare.com/ajax/libs/topcoat/0.8.0/font/SourceCodePro-Regular.otf");
-  
-  // Carga la música. Se recomienda usar una URL local o una de confianza.
-  musica = loadSound(
-    "https://cdn.pixabay.com/download/audio/2022/03/15/audio_66449b881e.mp3?filename=deep-ambient-110624.mp3",
-    () => console.log("Música cargada."),
-    (e) => console.error("Error al cargar la música:", e)
+  // 1. Cargar Fuente (con verificación de éxito/error)
+  loadFont(
+    "https://cdnjs.cloudflare.com/ajax/libs/topcoat/0.8.0/font/SourceCodePro-Regular.otf",
+    (f) => {
+      fuente = f;
+      console.log("Fuente cargada con éxito.");
+      // La música se carga dentro del callback de la fuente para asegurar la secuencia
+      cargarMusica(); 
+    },
+    (error) => {
+      // Si falla, se usa la fuente predeterminada (aunque no se vea en WEBGL)
+      console.error("ERROR: No se pudo cargar la fuente. Usando fuente predeterminada.", error);
+      fuente = 'sans-serif'; // Fallback
+      cargarMusica(); // Continuar con la carga de música
+    }
   );
 }
+
+function cargarMusica() {
+    // 2. Cargar Música (con verificación de éxito/error)
+    musica = loadSound(
+        "https://cdn.pixabay.com/download/audio/2022/03/15/audio_66449b881e.mp3?filename=deep-ambient-110624.mp3",
+        () => {
+            console.log("Música cargada con éxito.");
+            recursosCargados = true; // Marcar que todo está listo
+        },
+        (error) => {
+            console.error("ERROR: No se pudo cargar la música. El sketch continuará sin audio.", error);
+            // Marcar como cargado para que el sketch inicie aunque no haya música
+            recursosCargados = true; 
+        }
+    );
+}
+
 
 function setup() {
   createCanvas(windowWidth, windowHeight, WEBGL);
   
-  // Música
-  // userStartAudio() se llama en el index.html al hacer clic para iniciar.
-  musica.setVolume(0.4);
-  musica.loop();
-
   // Inicializar estrellas (Galaxia)
   for (let i = 0; i < 2000; i++) {
     stars.push(new Star());
@@ -99,60 +112,79 @@ function setup() {
     hearts.push(new Heart());
   }
 
-  textFont(fuente);
+  // Aplicar la fuente si se cargó correctamente
+  if (fuente && typeof fuente !== 'string') {
+    textFont(fuente);
+  }
+  
+  // Música: Inicializar volumen, el loop se inicia en el draw después del chequeo.
+  musica.setVolume(0.4);
 }
 
 function draw() {
-  background(0); // Fondo negro total
+    // **VERIFICACIÓN CRUCIAL:** Si los recursos aún no están cargados,
+    // solo dibuja un fondo y un mensaje de "Cargando..."
+    if (!recursosCargados) {
+        background(0);
+        fill(255);
+        textSize(32);
+        textAlign(CENTER, CENTER);
+        // Mostrar "Cargando" al centro de la pantalla
+        text("Cargando la Galaxia de Amor...", 0, 0); 
+        return; // Detener la ejecución del resto de draw
+    }
+    
+    // Si los recursos YA están cargados, continuar con la animación:
+    background(0);
 
-  // Rotación general de la vista
-  rotateY(frameCount * 0.001);
-  rotateX(frameCount * 0.0005);
+    // Música: Iniciar el loop solo si está cargada y no está sonando (evitar múltiples inicios)
+    if (musica.isLoaded() && !musica.isLooping()) {
+        musica.loop();
+    }
 
-  // 1. Dibujar Estrellas
-  for (let s of stars) {
-    s.show();
-  }
-  
-  // 2. Dibujar Corazones 3D (Se mueven y rotan)
-  for (let h of hearts) {
-    h.move();
-    h.show();
-  }
-  
-  // 3. Galaxia (Disco espiral suave)
-  push();
-  rotateY(frameCount * 0.0008);
-  noStroke();
-  fill(255, 80, 180, 30); // Rosado transparente
-  for (let i = 0; i < 40; i++) {
-    // Dibujar elipses concéntricas y estiradas
-    ellipse(0, 0, 1500 + i * 30, 300 + i * 10);
-  }
-  pop();
+    // Rotación general de la vista
+    rotateY(frameCount * 0.001);
+    rotateX(frameCount * 0.0005);
 
-  // 4. Texto Romántico (Centro de la Galaxia)
-  push();
-  // Rotación independiente para que el texto sea el foco
-  rotateY(-frameCount * 0.002); 
-  
-  // Alternar texto cada 120 frames (2 segundos a 60 fps)
-  let textoActual = textos[int(frameCount / 120) % textos.length];
-  
-  fill(255, 150, 220); // Rosado claro
-  textSize(80);
-  textAlign(CENTER, CENTER);
-  
-  // Texto en 3D
-  text(textoActual, 0, 0, 0); 
-  pop();
+    // 1. Dibujar Estrellas
+    for (let s of stars) {
+        s.show();
+    }
+    
+    // 2. Dibujar Corazones 3D
+    for (let h of hearts) {
+        h.move();
+        h.show();
+    }
+    
+    // 3. Galaxia (Disco espiral suave)
+    push();
+    rotateY(frameCount * 0.0008);
+    noStroke();
+    fill(255, 80, 180, 30);
+    for (let i = 0; i < 40; i++) {
+        ellipse(0, 0, 1500 + i * 30, 300 + i * 10);
+    }
+    pop();
 
-  // 5. Sol/Núcleo Brillante (Pequeño punto de luz en el centro)
-  push();
-  fill(255, 180, 50, 200);
-  noStroke();
-  sphere(30);
-  pop();
+    // 4. Texto Romántico (Centro de la Galaxia)
+    push();
+    rotateY(-frameCount * 0.002); 
+    
+    let textoActual = textos[int(frameCount / 120) % textos.length];
+    
+    fill(255, 150, 220);
+    textSize(80);
+    textAlign(CENTER, CENTER);
+    text(textoActual, 0, 0, 0); 
+    pop();
+
+    // 5. Sol/Núcleo Brillante
+    push();
+    fill(255, 180, 50, 200);
+    noStroke();
+    sphere(30);
+    pop();
 }
 
 function windowResized() {
