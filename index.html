@@ -39,6 +39,7 @@
 </head>
 <body>
     <div id="container" class="container"></div>
+    <!-- ¡IMPORTANTE! Solo un div con id="info" -->
     <div id="info">Esta galaxia está hecha de palabras, para ti mi vida. Gira y explora los 5 anillos.</div>
 
     <script>
@@ -48,24 +49,28 @@
         const orbitingElements = []; // Almacenará las palabras y corazones que orbitan
 
         // --- LISTA EXPANDIDA DE PALABRAS Y FRASES (50 en total) ---
-
+        // ¡LISTA CORREGIDA SIN DUPLICADOS!
         const ALL_TERMS = [
-            // Apodos originales y nuevos
-            "Para ti mi vida", "Mi niña", "Mi cielo", "Mi corazón", "Mi amorcito", "Mi ternura", "Bebita", "Preciosa", "Bonita", "Lindura", "Cariñito", "Encantadora", "Dulzura", "Tesoro", "Mi pequeña", "Cosita linda", "Mi luz", "Angelito", "Chiquita bella", "Mi florecita",
-            // Frases originales y nuevas
-            "Eres mi todo", "Te amo", "Te quiero", "Te adoro", "Te extraño", "Me encantas", "Eres lo más bonito de mi día", "Estoy loco por ti", "Me gustas muchísimo", "Eres mi lugar favorito", "Me haces bien", "Eres mi paz", "Eres mi persona", "Te necesito aquí", "Me traes loco",
-            // Frases y apodos adicionales para más densidad
-            "Mi estrella", "Reina", "Mi sol", "Cuento contigo", "Me completas", "Gracias por existir", "Eres mi motor", "Pienso en ti", "Contigo soy feliz", "Adoro tu sonrisa", "Sueño contigo", "Te elijo a ti", "Mi destino"
+            // Grupo 1: Apodos y nuevas frases íntimas (10 términos)
+            "Para ti mi vida", "Mi niña", "Mi cielo", "Mi corazón", "Mi amorcito", "Mi ternura", "Bebita", "Preciosa", "Bonita", "Lindura", 
+            // Grupo 2: Frases de afecto profundas (10 términos)
+            "Cariñito", "Encantadora", "Dulzura", "Tesoro", "Mi pequeña", "Cosita linda", "Mi luz", "Angelito", "Chiquita bella", "Mi florecita",
+            // Grupo 3: Sentimientos y dedicación (10 términos)
+            "Eres mi todo", "Te amo", "Te quiero", "Te adoro", "Te extraño", "Me encantas", "Eres lo más bonito de mi día", "Estoy loco por ti", "Me gustas muchísimo", "Eres mi lugar favorito", 
+            // Grupo 4: Estado y conexión (10 términos)
+            "Me haces bien", "Eres mi paz", "Eres mi persona", "Te necesito aquí", "Me traes loco", "Mi estrella", "Reina", "Mi sol", "Cuento contigo", "Me completas",
+            // Grupo 5: Futuro y gratitud (10 términos)
+            "Gracias por existir", "Eres mi motor", "Pienso en ti", "Contigo soy feliz", "Adoro tu sonrisa", "Sueño contigo", "Te elijo a ti", "Mi destino", "Por siempre", "Junto a ti"
         ];
         
         // Distribución de las 50 palabras en CINCO anillos orbitales 
         const GALAXIA_DATA = [
             // Anillo 1 (El más cercano y rápido)
-            { words: ALL_TERMS.slice(0, 8), color: "#FF00FF", radius: 40, speed: 0.006, heartInterval: 1 }, 
+            { words: ALL_TERMS.slice(0, 10), color: "#FF00FF", radius: 40, speed: 0.006, heartInterval: 1 }, 
             // Anillo 2
-            { words: ALL_TERMS.slice(8, 18), color: "#FF69B4", radius: 70, speed: 0.005, heartInterval: 2 }, 
+            { words: ALL_TERMS.slice(10, 20), color: "#FF69B4", radius: 70, speed: 0.005, heartInterval: 2 }, 
             // Anillo 3 (Central)
-            { words: ALL_TERMS.slice(18, 30), color: "#00FFFF", radius: 110, speed: 0.004, heartInterval: 3 }, 
+            { words: ALL_TERMS.slice(20, 30), color: "#00FFFF", radius: 110, speed: 0.004, heartInterval: 3 }, 
             // Anillo 4
             { words: ALL_TERMS.slice(30, 40), color: "#FFD700", radius: 150, speed: 0.003, heartInterval: 2 },
             // Anillo 5 (El más lejano y lento)
