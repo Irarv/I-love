@@ -6,7 +6,6 @@
     <title>Galaxia de Amor - Three.js</title>
     <!-- Carga de Three.js y OrbitControls para la interactividad -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <!-- Nota: En este entorno, a veces OrbitControls debe cargarse desde un CDN o estar incluido. Lo incluiré aquí. -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <style>
         body {
@@ -30,7 +29,7 @@
             background: rgba(0, 0, 0, 0.5);
             border-radius: 8px;
             z-index: 10;
-            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.7);
         }
         .container {
             width: 100vw;
@@ -40,19 +39,38 @@
 </head>
 <body>
     <div id="container" class="container"></div>
-    <div id="info">Gira y haz Zoom (Scroll) para explorar la Galaxia del Amor.</div>
+    <div id="info">¡5 Anillos de Amor! Gira y haz Zoom (Scroll) para explorar la Galaxia.</div>
 
     <script>
         // Variables globales de Three.js
+        // La escena, la cámara y el renderizador son esenciales para Three.js
         let scene, camera, renderer, controls;
-        let starfield;
-        const orbitingElements = []; // Almacenará las palabras y corazones
+        let starfield; // Referencia al fondo de estrellas
+        const orbitingElements = []; // Almacenará las palabras y corazones que orbitan
 
-        // Configuración de la Galaxia
+        // --- LISTA EXPANDIDA DE PALABRAS Y FRASES (50 en total) ---
+
+        const ALL_TERMS = [
+            // Apodos originales
+            "Mi niña", "Mi cielo", "Mi vida", "Mi corazón", "Mi amorcito", "Mi ternura", "Bebita", "Preciosa", "Bonita", "Lindura", "Cariñito", "Encantadora", "Dulzura", "Tesoro", "Mi pequeña", "Cosita linda", "Mi luz", "Angelito", "Chiquita bella", "Mi florecita",
+            // Frases originales
+            "Te amo", "Te quiero", "Te adoro", "Te extraño", "Me encantas", "Eres todo para mí", "Eres lo más bonito de mi día", "Estoy loco por ti", "Me gustas muchísimo", "Eres mi lugar favorito", "Me haces bien", "Eres mi paz", "Eres mi persona", "Te necesito aquí", "Me traes loco",
+            // Frases y apodos adicionales para más densidad
+            "Mi estrella", "Reina", "Mi todo", "Muñequita", "Mi sol", "Cuento contigo", "Me completas", "Gracias por existir", "Eres mi motor", "Pienso en ti", "Contigo soy feliz", "Adoro tu sonrisa", "Sueño contigo", "Te elijo a ti", "Mi destino"
+        ];
+        
+        // Distribución de las 50 palabras en CINCO anillos orbitales 
         const GALAXIA_DATA = [
-            { text: "Amor Eterno", color: "#FF69B4", radius: 50, speed: 0.005, count: 5 },
-            { text: "Felicidad", color: "#00FFFF", radius: 80, speed: 0.003, count: 8 },
-            { text: "Siempre Juntos", color: "#FFFFFF", radius: 110, speed: 0.002, count: 7 },
+            // Anillo 1 (El más cercano y rápido)
+            { words: ALL_TERMS.slice(0, 8), color: "#FF00FF", radius: 40, speed: 0.005, heartInterval: 1 }, 
+            // Anillo 2
+            { words: ALL_TERMS.slice(8, 18), color: "#FF69B4", radius: 70, speed: 0.004, heartInterval: 2 }, 
+            // Anillo 3 (Central)
+            { words: ALL_TERMS.slice(18, 30), color: "#00FFFF", radius: 110, speed: 0.003, heartInterval: 3 }, 
+            // Anillo 4
+            { words: ALL_TERMS.slice(30, 40), color: "#FFD700", radius: 150, speed: 0.002, heartInterval: 2 },
+            // Anillo 5 (El más lejano y lento)
+            { words: ALL_TERMS.slice(40, 50), color: "#FFFFFF", radius: 190, speed: 0.001, heartInterval: 3 },
         ];
 
         // --- Inicialización ---
@@ -61,37 +79,38 @@
             scene = new THREE.Scene();
 
             // 2. Cámara
-            // Parámetros: FOV, Aspect Ratio, Near, Far
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.z = 200;
+            camera.position.z = 250; 
 
             // 3. Renderizador
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.getElementById('container').appendChild(renderer.domElement);
 
-            // 4. Controles de Órbita (Permite la interacción de rotar y zoom)
+            // 4. Controles de Órbita
+            // Permiten al usuario rotar y hacer zoom en la escena
             controls = new THREE.OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true; // Efecto de inercia
+            controls.enableDamping = true; 
             controls.dampingFactor = 0.05;
-            controls.minDistance = 5; // Limitar el zoom
-            controls.maxDistance = 500;
+            controls.minDistance = 20; 
+            controls.maxDistance = 600;
 
-            // 5. Luces (Necesarias para el Sol central)
-            const ambientLight = new THREE.AmbientLight(0x404040, 5); // Luz suave
+            // 5. Luces (Ajustadas para el sol más grande y realista)
+            const ambientLight = new THREE.AmbientLight(0x404040, 5); 
             scene.add(ambientLight);
 
-            const pointLight = new THREE.PointLight(0xFFFFFF, 10, 500); // Luz del Sol
+            // Luz puntual intensa para simular el brillo del sol
+            const pointLight = new THREE.PointLight(0xFFFFFF, 20, 500); 
             scene.add(pointLight);
 
-            // Crear todos los elementos de la Galaxia
+            // Crear todos los elementos
             createStarfield();
-            createCentralSun();
-            createRings();
+            createCentralSun(); // Sol más grande
+            createRings(); // 5 Anillos de palabras y corazones
 
             // Manejar redimensionamiento
             window.addEventListener('resize', onWindowResize, false);
-
+            
             // Iniciar el bucle de animación
             animate();
         }
@@ -105,7 +124,6 @@
             const starVertices = [];
 
             for (let i = 0; i < starCount; i++) {
-                // Genera coordenadas aleatorias en un cubo grande
                 const x = (Math.random() - 0.5) * 2000;
                 const y = (Math.random() - 0.5) * 2000;
                 const z = (Math.random() - 0.5) * 2000;
@@ -114,25 +132,25 @@
 
             starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
 
-            // Material para las estrellas (pequeños puntos blancos)
             const starMaterial = new THREE.PointsMaterial({
                 color: 0xFFFFFF,
                 size: 1,
-                sizeAttenuation: true // Hace que se vean más pequeñas cuanto más lejos están
+                sizeAttenuation: true 
             });
 
             starfield = new THREE.Points(starGeometry, starMaterial);
             scene.add(starfield);
         }
 
-        // Función para crear el Sol/Núcleo de la Galaxia (esfera giratoria)
+        // Función para crear el Sol/Núcleo de la Galaxia (más grande y realista)
         function createCentralSun() {
-            const sunGeometry = new THREE.SphereGeometry(15, 32, 32);
+            // Radio más grande y más segmentos para una esfera más suave
+            const sunGeometry = new THREE.SphereGeometry(25, 64, 64); 
 
-            // Material que simula un sol brillante o un núcleo galáctico
+            // Material con luz propia para simular un sol ardiente
             const sunMaterial = new THREE.MeshPhongMaterial({
-                color: 0xFF8C00, // Naranja fuerte
-                emissive: 0xFF4500, // Emite luz roja/naranja (brillo interno)
+                color: 0xFF8C00, 
+                emissive: 0xFF4500, 
                 shininess: 100
             });
 
@@ -140,21 +158,21 @@
             sun.name = "CentralSun";
             scene.add(sun);
 
-            // Añadir un brillo extra usando un Sprite para el efecto de resplandor
+            // Efecto de resplandor (Flare)
             const flareTexture = createFlareTexture();
             const flareMaterial = new THREE.SpriteMaterial({
                 map: flareTexture,
-                color: 0xFFFF00, // Amarillo brillante
+                color: 0xFFFF00, 
                 transparent: true,
                 blending: THREE.AdditiveBlending,
                 sizeAttenuation: true
             });
             const flare = new THREE.Sprite(flareMaterial);
-            flare.scale.set(60, 60, 1);
-            sun.add(flare); // Añadir el flare como hijo del Sol
+            flare.scale.set(120, 120, 1); 
+            sun.add(flare); 
         }
 
-        // Función para crear la textura de resplandor
+        // Función auxiliar para generar la textura de resplandor (un degradado radial)
         function createFlareTexture() {
             const canvas = document.createElement('canvas');
             canvas.width = 128;
@@ -172,7 +190,7 @@
             return new THREE.CanvasTexture(canvas);
         }
 
-        // Función para crear la textura de la palabra (como Sprite)
+        // Función para crear la textura de la palabra como Sprite (plano 2D siempre mirando a cámara)
         function createTextSprite(message, color = "#FFFFFF") {
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
@@ -181,10 +199,9 @@
             const metrics = context.measureText(message);
             const textWidth = metrics.width;
 
-            // Ajustar el tamaño del canvas para el texto
             canvas.width = textWidth + 10;
             canvas.height = fontSize + 10;
-            context.font = `Bold ${fontSize}px Inter, sans-serif`; // Reset font after resize
+            context.font = `Bold ${fontSize}px Inter, sans-serif`; 
             context.fillStyle = color;
             context.fillText(message, 5, fontSize - 2);
 
@@ -199,18 +216,17 @@
             });
 
             const sprite = new THREE.Sprite(material);
-            // Ajustar escala para que se vea bien en 3D
             sprite.scale.set(canvas.width / 8, canvas.height / 8, 1);
             return sprite;
         }
 
-        // Función para crear la textura del corazón
+        // Función para crear la textura del corazón como Sprite
         function createHeartSprite() {
             const canvas = document.createElement('canvas');
             canvas.width = 64;
             canvas.height = 64;
             const context = canvas.getContext('2d');
-            const color = "#FF007F"; // Rosa intenso
+            const color = "#FF007F"; 
             context.fillStyle = color;
             context.shadowColor = color;
             context.shadowBlur = 5;
@@ -240,34 +256,49 @@
             return sprite;
         }
 
-        // Función principal para crear los anillos de palabras y corazones
+        // Función principal para crear los CINCO anillos de palabras y corazones
         function createRings() {
             GALAXIA_DATA.forEach(ring => {
-                // Repetir el texto/corazón varias veces en el anillo
-                for (let i = 0; i < ring.count; i++) {
+                const words = ring.words;
+                // Calculamos el total de elementos (palabras + corazones) para distribuir uniformemente
+                const totalElements = words.length + Math.floor(words.length / ring.heartInterval);
+                let elementIndex = 0; 
+                let wordCounter = 0; 
+
+                for (let i = 0; i < totalElements; i++) {
                     let element;
-                    if (i % 2 === 0) { // Alternar palabras y corazones (si es posible)
-                        element = createTextSprite(ring.text, ring.color);
-                    } else {
+                    // Lógica para alternar palabras y corazones
+                    let isHeart = (i % (ring.heartInterval + 1) === ring.heartInterval); 
+
+                    if (!isHeart && wordCounter < words.length) { 
+                        // Es una palabra
+                        element = createTextSprite(words[wordCounter], ring.color);
+                        wordCounter++;
+                    } else if (isHeart) {
+                        // Es un corazón
                         element = createHeartSprite();
+                    } else {
+                        // Si nos quedamos sin palabras, terminamos este anillo
+                        break; 
                     }
 
-                    // Posicionar el elemento en un círculo plano (anillo)
-                    const angle = (i / ring.count) * Math.PI * 2;
+                    // Posicionar el elemento en el anillo (círculo 3D)
+                    const angle = (elementIndex / totalElements) * Math.PI * 2;
                     element.position.x = Math.cos(angle) * ring.radius;
                     element.position.z = Math.sin(angle) * ring.radius;
-                    element.position.y = (Math.random() - 0.5) * 5; // Ligeramente disperso en Y
+                    element.position.y = (Math.random() - 0.5) * 8; // Dispersión en Y para profundidad
 
-                    // Almacenar el elemento con sus propiedades de órbita
+                    // Almacenar datos para el movimiento
                     element.userData = {
                         angle: angle,
                         radius: ring.radius,
                         speed: ring.speed,
-                        isHeart: i % 2 !== 0
+                        isHeart: isHeart 
                     };
 
                     orbitingElements.push(element);
                     scene.add(element);
+                    elementIndex++;
                 }
             });
         }
@@ -285,25 +316,26 @@
 
             // Mover los elementos orbitando
             orbitingElements.forEach(element => {
-                const { angle, radius, speed } = element.userData;
+                const { radius, speed } = element.userData;
 
-                // Incrementar el ángulo
+                // Incrementar el ángulo y calcular la nueva posición
                 element.userData.angle += speed;
-
-                // Calcular la nueva posición en el anillo
                 element.position.x = Math.cos(element.userData.angle) * radius;
                 element.position.z = Math.sin(element.userData.angle) * radius;
 
-                // Animación de escala/pulsación para los corazones
+                // Animación de pulsación para los corazones
                 if (element.userData.isHeart) {
-                    const scaleFactor = 1 + Math.sin(Date.now() * 0.005) * 0.1;
+                    const scaleFactor = 1 + Math.sin(Date.now() * 0.005) * 0.2; 
                     element.scale.set(10 * scaleFactor, 10 * scaleFactor, 1);
                 }
+                
+                // Asegurar que las palabras siempre miren a la cámara
+                element.rotation.y = camera.rotation.y;
             });
 
 
             // Actualizar controles y renderizar
-            controls.update(); // Necesario para OrbitControls con damping
+            controls.update(); 
             renderer.render(scene, camera);
         }
 
@@ -315,7 +347,7 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
-        // Iniciar la aplicación 3D una vez que la ventana esté completamente cargada
+        // Iniciar la aplicación 3D al cargar la ventana
         window.onload = init;
     </script>
 </body>
